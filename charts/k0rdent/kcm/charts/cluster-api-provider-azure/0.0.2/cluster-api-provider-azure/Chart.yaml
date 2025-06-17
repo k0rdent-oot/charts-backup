@@ -1,0 +1,8 @@
+annotations:
+  hmc.mirantis.com/infrastructure-providers: azure
+apiVersion: v2
+appVersion: 1.17.0
+description: A Helm chart for Cluster API provider Azure
+name: cluster-api-provider-azure
+type: application
+version: 0.0.2

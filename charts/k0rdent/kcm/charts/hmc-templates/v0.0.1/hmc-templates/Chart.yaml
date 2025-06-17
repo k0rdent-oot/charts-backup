@@ -1,0 +1,8 @@
+annotations:
+  hmc.mirantis.com/type: core
+apiVersion: v2
+appVersion: 0.1.0
+description: A Helm chart for HMC templates
+name: hmc-templates
+type: application
+version: v0.0.1

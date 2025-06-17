@@ -1,0 +1,11 @@
+annotations:
+  hmc.mirantis.com/bootstrap-providers: k0s
+  hmc.mirantis.com/control-plane-providers: k0s
+  hmc.mirantis.com/infrastructure-providers: azure
+apiVersion: v2
+appVersion: 1.31.1+k0s.1
+description: 'An HMC template to deploy a k0s cluster on Azure with bootstrapped control
+  plane nodes. '
+name: azure-standalone-cp
+type: application
+version: 0.0.2

@@ -1,0 +1,18 @@
+apiVersion: v2
+dependencies:
+- condition: flux2.enabled
+  name: flux2
+  repository: https://fluxcd-community.github.io/helm-charts
+  version: 2.14.0
+- condition: cert-manager.enabled
+  name: cert-manager
+  repository: https://charts.jetstack.io
+  version: 1.16.1
+- condition: cluster-api-operator.enabled
+  name: cluster-api-operator
+  repository: https://kubernetes-sigs.github.io/cluster-api-operator
+  version: 0.15.1
+description: A Helm chart for HMC core components
+name: hmc
+type: application
+version: 0.0.6

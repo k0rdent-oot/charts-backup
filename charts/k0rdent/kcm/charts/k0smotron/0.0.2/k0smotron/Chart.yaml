@@ -1,0 +1,10 @@
+annotations:
+  hmc.mirantis.com/bootstrap-providers: k0s
+  hmc.mirantis.com/control-plane-providers: k0s; k0smotron
+  hmc.mirantis.com/infrastructure-providers: k0smotron
+apiVersion: v2
+appVersion: 1.0.4
+description: A Helm chart for K0smotron
+name: k0smotron
+type: application
+version: 0.0.2

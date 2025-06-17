@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: 0.42.0
+description: Projectsveltos helm chart for Kubernetes
+icon: https://github.com/projectsveltos/sveltos/raw/main/docs/assets/logo.png
+name: projectsveltos
+type: application
+version: 0.42.0

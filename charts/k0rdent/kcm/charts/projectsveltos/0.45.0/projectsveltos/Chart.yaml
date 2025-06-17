@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 0.45.0
+dependencies:
+- name: projectsveltos
+  repository: https://projectsveltos.github.io/helm-charts
+  version: 0.45.0
+description: A Helm chart to refer the official projectsveltos helm chart
+name: projectsveltos
+type: application
+version: 0.45.0

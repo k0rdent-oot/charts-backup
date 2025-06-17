@@ -1,0 +1,5 @@
+apiVersion: v2
+description: A Helm chart for HMC templates
+name: hmc-templates
+type: application
+version: 0.0.4

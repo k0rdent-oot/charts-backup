@@ -1,0 +1,61 @@
+# Cluster parameters
+controlPlaneNumber: 3
+workersNumber: 2
+
+ipamEnabled: false
+
+ipPool:
+  data:
+    apiGroup: ipam.cluster.x-k8s.io/v1alpha2
+    kind: InClusterIPPool
+    name: test-claim
+
+clusterNetwork:
+  pods:
+    cidrBlocks:
+    - "10.244.0.0/16"
+  services:
+    cidrBlocks:
+    - "10.96.0.0/12"
+
+clusterLabels: {}
+clusterAnnotations: {}
+
+# vSphere cluster parameters
+clusterIdentity:
+  name: ""
+vsphere:
+  server: ""
+  thumbprint: ""
+  datacenter: ""
+  datastore: ""
+  resourcePool: ""
+  folder: ""
+controlPlaneEndpointIP: ""
+
+# vSphere machines parameters
+controlPlane:
+  ssh:
+    user: ""
+    publicKey: ""
+  rootVolumeSize: 30
+  cpus: 2
+  memory: 4096
+  vmTemplate: ""
+  network: ""
+
+worker:
+  ssh:
+    user: ""
+    publicKey: ""
+  rootVolumeSize: 30
+  cpus: 2
+  memory: 4096
+  vmTemplate: ""
+  network: ""
+
+# K0s parameters
+k0s:
+  version: v1.32.3+k0s.0
+  api:
+    extraArgs: {}

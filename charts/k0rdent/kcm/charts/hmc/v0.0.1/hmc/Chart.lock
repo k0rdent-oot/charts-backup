@@ -1,0 +1,9 @@
+dependencies:
+- name: flux2
+  repository: https://fluxcd-community.github.io/helm-charts
+  version: 2.13.0
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.15.1
+digest: sha256:eb8ee85d913ca7b3b220f40b3ca3a3b73ba13535f91e6cacd0765b16167dad13
+generated: "2024-07-24T14:42:18.701062312Z"

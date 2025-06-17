@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 0.1.9
+description: A KubeVirt Pluggable provider Helm chart
+name: kubevirt-pp
+type: application
+version: 0.3.0

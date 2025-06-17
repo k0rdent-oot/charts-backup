@@ -1,0 +1,17 @@
+annotations:
+  hmc.mirantis.com/type: core
+apiVersion: v2
+appVersion: 0.1.0
+dependencies:
+- condition: flux2.enabled
+  name: flux2
+  repository: https://fluxcd-community.github.io/helm-charts
+  version: 2.13.0
+- condition: cert-manager.enabled
+  name: cert-manager
+  repository: https://charts.jetstack.io
+  version: 1.15.1
+description: A Helm chart for HMC core components
+name: hmc
+type: application
+version: v0.0.1

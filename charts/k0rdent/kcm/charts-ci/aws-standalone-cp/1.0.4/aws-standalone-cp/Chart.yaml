@@ -1,0 +1,13 @@
+annotations:
+  cluster.x-k8s.io/bootstrap-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/control-plane-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/infrastructure-aws: v1beta2
+  cluster.x-k8s.io/provider: infrastructure-aws, control-plane-k0sproject-k0smotron,
+    bootstrap-k0sproject-k0smotron
+apiVersion: v2
+appVersion: v1.32.5+k0s.1
+description: 'A KCM template to deploy a k0s cluster on AWS with bootstrapped control
+  plane nodes. '
+name: aws-standalone-cp
+type: application
+version: 1.0.4

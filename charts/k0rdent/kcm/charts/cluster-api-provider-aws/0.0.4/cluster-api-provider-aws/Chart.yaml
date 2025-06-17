@@ -1,0 +1,11 @@
+annotations:
+  cluster.x-k8s.io/provider: infrastructure-aws
+  cluster.x-k8s.io/v1alpha3: v1alpha3
+  cluster.x-k8s.io/v1alpha4: v1alpha4
+  cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
+apiVersion: v2
+appVersion: 2.7.1
+description: A Helm chart for Cluster API provider AWS
+name: cluster-api-provider-aws
+type: application
+version: 0.0.4

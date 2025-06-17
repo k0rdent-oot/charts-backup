@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: 0.52.2
+description: A Helm chart for Projectsveltos CustomResourceDefinitions
+icon: https://github.com/projectsveltos/sveltos/raw/main/docs/assets/logo.png
+name: sveltos-crds
+type: application
+version: 0.52.2

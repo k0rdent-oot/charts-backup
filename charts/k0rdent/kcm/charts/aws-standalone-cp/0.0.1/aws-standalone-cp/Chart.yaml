@@ -1,0 +1,11 @@
+annotations:
+  hmc.mirantis.com/bootstrap-providers: k0s
+  hmc.mirantis.com/control-plane-providers: k0s
+  hmc.mirantis.com/infrastructure-providers: aws
+apiVersion: v2
+appVersion: 1.30.4+k0s.0
+description: 'An HMC template to deploy a k0s cluster on AWS with bootstrapped control
+  plane nodes. '
+name: aws-standalone-cp
+type: application
+version: 0.0.1

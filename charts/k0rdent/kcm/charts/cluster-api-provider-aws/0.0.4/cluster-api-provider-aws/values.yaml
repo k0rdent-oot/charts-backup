@@ -1,0 +1,9 @@
+configSecret:
+  create: true
+  name: "aws-variables"
+  namespace: ""
+
+airgap: false
+
+config:
+  AWS_B64ENCODED_CREDENTIALS: Cg==

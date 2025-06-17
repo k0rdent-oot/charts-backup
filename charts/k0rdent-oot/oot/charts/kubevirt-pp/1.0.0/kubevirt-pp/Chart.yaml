@@ -1,0 +1,11 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- condition: kubevirt.enabled
+  name: kubevirt
+  repository: oci://ghcr.io/k0rdent-oot/oot/charts
+  version: '>=0.3.0'
+description: A KubeVirt Pluggable provider Helm chart
+name: kubevirt-pp
+type: application
+version: 1.0.0

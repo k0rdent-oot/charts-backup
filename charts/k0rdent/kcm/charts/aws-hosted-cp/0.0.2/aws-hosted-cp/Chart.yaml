@@ -1,0 +1,11 @@
+annotations:
+  hmc.mirantis.com/bootstrap-providers: k0s
+  hmc.mirantis.com/control-plane-providers: k0smotron
+  hmc.mirantis.com/infrastructure-providers: aws
+apiVersion: v2
+appVersion: v1.31.1+k0s.1
+description: 'An HMC template to deploy a k8s cluster on AWS with control plane components
+  within the management cluster. '
+name: aws-hosted-cp
+type: application
+version: 0.0.2

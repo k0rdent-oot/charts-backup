@@ -1,0 +1,9 @@
+annotations:
+  cluster.x-k8s.io/infrastructure-aws: v1beta2
+  cluster.x-k8s.io/provider: infrastructure-aws
+apiVersion: v2
+description: 'A KCM template to deploy a cluster on EKS with bootstrapped control
+  plane nodes. '
+name: aws-eks
+type: application
+version: 0.0.3

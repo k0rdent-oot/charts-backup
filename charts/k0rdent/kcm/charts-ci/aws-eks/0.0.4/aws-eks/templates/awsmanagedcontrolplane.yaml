@@ -1,0 +1,18 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: AWSManagedControlPlane
+metadata:
+  name: {{ include "awsmanagedcontrolplane.name" . }}
+  namespace: kcm-system
+spec:
+  region: {{ .Values.region }}
+  {{- if not (quote .Values.sshKeyName | empty) }}
+  sshKeyName: {{ .Values.sshKeyName | quote }}
+  {{- end }}
+  version: {{ .Values.kubernetes.version }}
+  identityRef:
+    kind: {{ .Values.clusterIdentity.kind }}
+    name: {{ .Values.clusterIdentity.name }}
+  {{- with .Values.addons }}
+  addons:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}

@@ -1,0 +1,849 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: addon-controller
+  labels:
+    control-plane: addon-controller
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+    {{- with .Values.addonController.labels }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    {{- with .Values.addonController.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: addon-controller
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: addon-controller
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.addonController.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.addonController.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+  {{- if .Values.agent.managementCluster }}
+      - args:
+      {{- range .Values.addonController.controller.argsAgentMgmtCluster }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.addonController.controller.extraArgsAgentMgmtCluster }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        - --registry={{ .Values.global.registry }}
+  {{- else }}
+      - args:
+      {{- range .Values.addonController.controller.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.addonController.controller.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        - --registry={{ .Values.global.registry }}
+  {{- end }}
+  {{- if ne (len .Values.addonController.driftDetectionManagerPatchConfigMap.data) 0 }}
+        - --drift-detection-config={{ .Values.addonController.driftDetectionManagerPatchConfigMap.name }}
+  {{- end }}
+  {{- if .Values.telemetry.disabled }}
+    {{"-  --disable-telemetry=true" | nindent 8 }}
+  {{- end }}
+        - --capi-onboard-annotation={{ .Values.global.capiOnboardAnnotation }}
+        command:
+        - /manager
+        env:
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              divisor: "0"
+              resource: limits.memory
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              divisor: "0"
+              resource: limits.cpu
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.addonController.controller.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.addonController.controller.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.addonController.controller.image.digest }}{{- else }}:{{ .Values.addonController.controller.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: controller
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.addonController.controller.resources | nindent 10
+          }}
+        securityContext: {{- toYaml .Values.addonController.controller.containerSecurityContext
+          | nindent 10 }}
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      securityContext: {{- toYaml .Values.addonController.podSecurityContext | nindent 8 }}
+      serviceAccountName: addon-controller
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - emptyDir: {}
+        name: tmp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: access-manager
+  {{- with .Values.accessManager.manager.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: access-manager
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  {{- with .Values.accessManager.labels }}
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: access-manager
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: access-manager
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.accessManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.accessManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - args:
+      {{- range .Values.accessManager.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.accessManager.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        - --capi-onboard-annotation={{ .Values.global.capiOnboardAnnotation }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.accessManager.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.accessManager.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.accessManager.manager.image.digest }}{{- else }}:{{ .Values.accessManager.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.accessManager.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.accessManager.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.accessManager.podSecurityContext | nindent 8 }}
+      serviceAccountName: access-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sc-manager
+  {{- with .Values.accessManager.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: sc-manager
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  {{- with .Values.scManager.labels }}
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: sc-manager
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: sc-manager
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.scManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.scManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - args:
+      {{- range .Values.scManager.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.scManager.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.scManager.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.scManager.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.scManager.manager.image.digest }}{{- else }}:{{ .Values.scManager.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.scManager.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.scManager.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.scManager.podSecurityContext | nindent 8 }}
+      serviceAccountName: sc-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hc-manager
+  {{- with .Values.hcManager.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: hc-manager
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  {{- with .Values.hcManager.labels }}
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: hc-manager
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: hc-manager
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hcManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hcManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+  {{- if .Values.agent.managementCluster }}
+      - args:
+      {{- range .Values.hcManager.manager.argsAgentMgmtCluster }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.hcManager.manager.extraArgsAgentMgmtCluster }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- else }}
+      - args:
+      {{- range .Values.hcManager.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.hcManager.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- end }}
+        - --capi-onboard-annotation={{ .Values.global.capiOnboardAnnotation }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.hcManager.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.hcManager.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.hcManager.manager.image.digest }}{{- else }}:{{ .Values.hcManager.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.hcManager.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.hcManager.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.hcManager.podSecurityContext | nindent 8 }}
+      serviceAccountName: hc-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-manager
+  {{- with .Values.eventManager.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: event-manager
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  {{- with .Values.eventManager.labels }}
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: event-manager
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: event-manager
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.eventManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.eventManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+  {{- if .Values.agent.managementCluster }}
+      - args:
+      {{- range .Values.eventManager.manager.argsAgentMgmtCluster }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.eventManager.manager.extraArgsAgentMgmtCluster }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- else }}
+      - args:
+      {{- range .Values.eventManager.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.eventManager.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- end }}
+        - --capi-onboard-annotation={{ .Values.global.capiOnboardAnnotation }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.eventManager.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.eventManager.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.eventManager.manager.image.digest }}{{- else }}:{{ .Values.eventManager.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.eventManager.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.eventManager.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: event-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: classifier-manager
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    {{- with .Values.classifierManager.annotations }}
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  labels:
+    control-plane: classifier
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  {{- with .Values.classifierManager.labels }}
+  {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: classifier
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: classifier
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.classifierManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.classifierManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+    {{- if .Values.agent.managementCluster }}
+      - args:
+      {{- range .Values.classifierManager.manager.argsAgentMgmtCluster }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.classifierManager.manager.extraArgsAgentMgmtCluster }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        - --registry={{ .Values.global.registry }}
+    {{- else }}
+      - args:
+      {{- range .Values.classifierManager.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.classifierManager.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        - --registry={{ .Values.global.registry }}
+    {{- end }}
+    {{- if ne (len .Values.classifierManager.agentPatchConfigMap.data) 0 }}
+        - --sveltos-agent-config={{ .Values.classifierManager.agentPatchConfigMap.name }}
+    {{- end }}
+        - --capi-onboard-annotation={{ .Values.global.capiOnboardAnnotation }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.classifierManager.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.classifierManager.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.classifierManager.manager.image.digest }}{{- else }}:{{ .Values.classifierManager.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.classifierManager.manager.resources | nindent 10
+          }}
+        securityContext: {{- toYaml .Values.classifierManager.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.classifierManager.podSecurityContext | nindent 8 }}
+      serviceAccountName: classifier-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shard-controller
+  {{- with .Values.shardController.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: shard-controller
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: shard-controller
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: shard-controller
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+      {{- with .Values.shardController.labels }}
+      {{- range $key, $value := . }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.shardController.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.shardController.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+  {{- if .Values.agent.managementCluster }}
+      - args:
+      {{- range .Values.shardController.manager.argsAgentMgmtCluster }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.shardController.manager.extraArgsAgentMgmtCluster }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- else }}
+      - args:
+      {{- range .Values.shardController.manager.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.shardController.manager.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+  {{- end }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.shardController.manager.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.shardController.manager.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.shardController.manager.image.digest }}{{- else }}:{{ .Values.shardController.manager.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.shardController.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.shardController.manager.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.shardController.podSecurityContext | nindent 8 }}
+      serviceAccountName: shard-controller
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: techsupport-controller
+  {{- with .Values.techsupportController.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    control-plane: techsupport
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: techsupport
+    {{- include "projectsveltos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: techsupport
+        {{- with .Values.techsupportController.labels }}
+        {{- range $key, $value := . }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+      {{- include "projectsveltos.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.techsupportController.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.techsupportController.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - args:
+      {{- range .Values.techsupportController.controller.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.techsupportController.controller.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        command:
+        - /manager
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.techsupportController.controller.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.techsupportController.controller.image.repository }}{{- if .Values.global.useDigest }}@{{ .Values.techsupportController.controller.image.digest }}{{- else }}:{{ .Values.techsupportController.controller.image.tag | default .Chart.AppVersion }}{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: controller
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.shardController.manager.resources | nindent 10 }}
+        securityContext: {{- toYaml .Values.techsupportController.controller.containerSecurityContext
+          | nindent 10 }}
+      securityContext: {{- toYaml .Values.shardController.podSecurityContext | nindent 8 }}
+      serviceAccountName: techsupport-controller
+      terminationGracePeriodSeconds: 10

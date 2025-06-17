@@ -1,0 +1,10 @@
+{{ if .Values.webhook.conversion }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: project-selfsigned-issuer
+  labels:
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{ end }}

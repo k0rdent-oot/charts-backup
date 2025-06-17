@@ -1,0 +1,7 @@
+annotations:
+  cluster.x-k8s.io/provider: infrastructure-internal
+apiVersion: v2
+description: 'A KCM template to adopt an already existing kubernetes cluster '
+name: adopted-cluster
+type: application
+version: 0.0.2

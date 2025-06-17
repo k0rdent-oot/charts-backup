@@ -1,0 +1,361 @@
+global:
+  registry: docker.io
+  useDigest: false
+  capiOnboardAnnotation: ""
+  imagePullSecrets: []
+    # - name: my-registry-secret
+  additionalLabels: {}
+accessManager:
+  annotations: {}
+  labels: {}
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --v=5
+    extraArgs: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/access-manager
+      tag: v0.54.0
+      digest: sha256:0feb7beaa36eda03467778ca91217ac7a93e00affa31ec90ca539c461b89a694
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+addonController:
+  annotations: {}
+  labels: {}
+  controller:
+    args:
+      - --diagnostics-address=:8443
+      - --report-mode=0
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+    extraArgs: {}
+    argsAgentMgmtCluster:
+      - --diagnostics-address=:8443
+      - --report-mode=0
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+      - --agent-in-mgmt-cluster=true
+    extraArgsAgentMgmtCluster: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    image:
+      repository: projectsveltos/addon-controller
+      tag: v0.54.0
+      digest: sha256:053186ed4b67565b3fb8a95bdd4b5e4d1314f39adb2c308cfacca066f0f47255
+    resources:
+      requests:
+        memory: 512Mi
+  driftDetectionManagerPatchConfigMap:
+    name: drift-detection-config
+    data: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  ports:
+    - name: metrics
+      port: 80
+      protocol: TCP
+      targetPort: 8443
+  nodeSelector: {}
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+  type: ClusterIP
+classifierManager:
+  annotations: {}
+  labels: {}
+  agentPatchConfigMap:
+    name: sveltos-agent-config
+    data: {}
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --report-mode=0
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+    extraArgs: {}
+    argsAgentMgmtCluster:
+      - --diagnostics-address=:8443
+      - --report-mode=0
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+      - --agent-in-mgmt-cluster=true
+    extraArgsAgentMgmtCluster: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/classifier
+      tag: v0.54.0
+      digest: sha256:12138664d2a9a31753bb65d56c854ce6a094a3517d96e919e2dd686554b2b2bc
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+driftDetectionManager:
+  serviceAccount:
+    annotations: {}
+eventManager:
+  annotations: {}
+  labels: {}
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+    extraArgs: {}
+    argsAgentMgmtCluster:
+      - --diagnostics-address=:8443
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+      - --agent-in-mgmt-cluster=true
+    extraArgsAgentMgmtCluster: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/event-manager
+      tag: v0.54.0
+      digest: sha256:3f361fc6b62d04f653b50e89880a44de8a0ed5642547542a6dc5047d1ca631d0
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+hcManager:
+  annotations: {}
+  labels: {}
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+    extraArgs: {}
+    argsAgentMgmtCluster:
+      - --diagnostics-address=:8443
+      - --shard-key=
+      - --v=5
+      - --version=v0.54.0
+      - --agent-in-mgmt-cluster=true
+    extraArgsAgentMgmtCluster: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/healthcheck-manager
+      tag: v0.54.0
+      digest: sha256:fe76022274021e90b5aa54a8cf3069bf4264fdca9ffd0f02ac111845b9b19377
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+kubernetesClusterDomain: cluster.local
+registerMgmtCluster:
+  serviceAccount:
+    annotations: {}
+registerMgmtClusterJob:
+  backoffLimit: 4
+  registerMgmtCluster:
+    args:
+      - --labels=
+      - --service-account-token=false
+    extraArgs: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/register-mgmt-cluster
+      tag: v0.54.0
+      digest: sha256:fb057d4cd42b046ffd8a519c880701471e2f6d99b485b991259274187295e47b
+    imagePullPolicy: IfNotPresent
+    nodeSelector: {}
+    tolerations: []
+    resources:
+      requests:
+        memory: 128Mi
+scManager:
+  annotations: {}
+  labels: {}
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --shard-key=
+      - --v=5
+    extraArgs: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/sveltoscluster-manager
+      tag: v0.54.0
+      digest: sha256:92c3a1a61961296ee66289a681a233ca4e5b2fd5107377b995e6de916670b5c1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  ports:
+    - name: metrics
+      port: 80
+      protocol: TCP
+      targetPort: 8443
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+  type: ClusterIP
+shardController:
+  annotations: {}
+  labels: {}
+  extraEnv: []
+  manager:
+    args:
+      - --diagnostics-address=:8443
+      - --v=5
+      - --report-mode=0
+    extraArgs: {}
+    argsAgentMgmtCluster:
+      - --diagnostics-address=:8443
+      - --report-mode=0
+      - --agent-in-mgmt-cluster=true
+      - --v=5
+    extraArgsAgentMgmtCluster: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/shard-controller
+      tag: v0.54.0
+      digest: sha256:01d636cc9bcf693bcdd1ba2a2649c97d3b15ac87a39fcb921bc506a248669cb2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+techsupportController:
+  annotations: {}
+  labels: {}
+  extraEnv: []
+  controller:
+    args:
+      - --v=5
+    extraArgs: {}
+    extraEnv: []
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    image:
+      repository: projectsveltos/techsupport
+      tag: v0.54.0
+      digest: sha256:94dead9a34f189d1856a75e2a5215dfc70d6539c99e81c2fb41bf92d87403df2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1024Mi
+      requests:
+        cpu: 10m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  tolerations: []
+  serviceAccount:
+    annotations: {}
+sveltosAgentManager:
+  serviceAccount:
+    annotations: {}
+prometheus:
+  enabled: false
+agent:
+  managementCluster: false
+telemetry:
+  disabled: false
