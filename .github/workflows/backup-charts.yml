@@ -3,12 +3,16 @@ name: Backup Helm Charts
 on:
   schedule:
     - cron: '0 1 * * *' # Daily at 1:00 AM UTC
+  push:
+    paths:
+      - 'scripts/backup-charts.sh'
+      - '.github/workflows/backup-charts.yml'
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Run in dry-run mode (no actual changes)'
         required: false
-        default: 'true'
+        default: 'false'
         type: choice
         options:
           - 'true'
@@ -47,14 +51,14 @@ jobs:
           # https://github.com/settings/tokens
           GH_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             ./scripts/backup-charts.sh --dry-run --gh-orgs "k0rdent,k0rdent-oot"
           else
             ./scripts/backup-charts.sh --gh-orgs "k0rdent,k0rdent-oot"
           fi
 
       - name: Commit and push changes
-        if: inputs.dry_run == 'false'
+        if: github.event_name != 'workflow_dispatch' || inputs.dry_run == 'false'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
