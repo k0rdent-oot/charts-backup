@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: 0.1.9
-description: A Hetzner Pluggable provider Helm chart
-name: hetzner-pp
-type: application
-version: 1.0.0

@@ -1,0 +1,28 @@
+{{- if gt (int .Values.workersNumber) 0 }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: RemoteMachineTemplate
+metadata:
+  name: {{ include "remotemachinetemplate.worker.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    spec:
+      pool: worker
+
+---
+{{- if .Values.remoteMachines }}
+{{- range $index, $machine := .Values.remoteMachines.worker }}
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: PooledRemoteMachine
+metadata:
+  name: {{ $machine.name | default (printf "worker-%s" ($machine.address | adler32sum)) }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  pool: worker
+  machine:
+{{ toYaml (omit $machine "name") | indent 4 }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

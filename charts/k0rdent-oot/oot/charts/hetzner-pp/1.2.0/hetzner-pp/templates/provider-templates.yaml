@@ -1,0 +1,14 @@
+---
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ProviderTemplate
+metadata:
+  name: cluster-api-provider-hetzner
+spec:
+  helm:
+    chartSpec:
+      chart: cluster-api-provider-hetzner
+      version: {{ .Chart.Version | quote }}
+      interval: 10m0s
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo

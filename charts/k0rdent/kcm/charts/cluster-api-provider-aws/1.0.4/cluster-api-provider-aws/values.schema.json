@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM provider cluster-api-provider-aws template",
+  "type": "object",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "AWS_B64ENCODED_CREDENTIALS": {
+          "type": "string"
+        }
+      }
+    },
+    "configSecret": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      }
+    },
+    "manager": {
+      "type": "object"
+    }
+  }
+}

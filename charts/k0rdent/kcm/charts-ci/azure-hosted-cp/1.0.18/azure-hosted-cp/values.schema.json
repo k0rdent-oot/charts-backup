@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster azure-hosted-cp template",
+  "type": "object",
+  "properties": {
+    "auth": {
+      "description": "Authentication settings for the cluster, optional, auto-populated",
+      "type": "object",
+      "properties": {
+        "configSecret": {
+          "description": "Reference to the Secret containing the cluster’s AuthenticationConfiguration, auto-populated",
+          "type": "object",
+          "properties": {
+            "hash": {
+              "description": "Hash of the AuthenticationConfiguration data stored in the Secret, auto-populated",
+              "type": "string"
+            },
+            "key": {
+              "description": "The data key in the Secret that contains the AuthenticationConfiguration, auto-populated",
+              "type": "string"
+            },
+            "name": {
+              "description": "Name of the Secret that stores the AuthenticationConfiguration, auto-populated",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "bastion": {
+      "type": "object",
+      "properties": {
+        "bastionSpec": {
+          "type": "object",
+          "properties": {
+            "azureBastion": {
+              "type": "object"
+            }
+          }
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "clusterAnnotations": {
+      "type": "object"
+    },
+    "clusterIdentity": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "type": "object"
+    },
+    "clusterNetwork": {
+      "type": "object",
+      "properties": {
+        "pods": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "controlPlaneNumber": {
+      "type": "integer"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "computeGallery": {
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "marketplace": {
+          "type": "object",
+          "properties": {
+            "offer": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "sku": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "k0s": {
+      "description": "K0s parameters",
+      "type": "object",
+      "properties": {
+        "api": {
+          "description": "Kubernetes API server parameters",
+          "type": "object",
+          "properties": {
+            "extraArgs": {
+              "description": "Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process",
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "arch": {
+          "description": "K0s Download URL Arch",
+          "default": "amd64",
+          "type": "string",
+          "enum": [
+            "amd64",
+            "arm64",
+            "arm"
+          ]
+        },
+        "network": {
+          "description": "Kubernetes cluster network configuration",
+          "type": "object",
+          "properties": {
+            "calico": {
+              "description": "Calico-specific configuration",
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "description": "Calico network mode",
+                  "examples": [
+                    "ipip",
+                    "vxlan",
+                    "never"
+                  ],
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": true
+            },
+            "provider": {
+              "description": "Network provider to use",
+              "examples": [
+                "kuberouter",
+                "calico",
+                "custom"
+              ],
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": true
+        },
+        "version": {
+          "description": "K0s version",
+          "type": "string"
+        },
+        "workerArgs": {
+          "description": "Args specifies extra arguments to be passed to k0s worker. See: https://docs.k0sproject.io/stable/worker-node-config/ See: https://docs.k0sproject.io/stable/cli/k0s_worker/",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "k0smotron": {
+      "description": "K0smotron parameters",
+      "type": "object",
+      "properties": {
+        "controllerPlaneFlags": {
+          "description": "ControlPlaneFlags allows to configure additional flags for k0s control plane and to override existing ones. The default flags are kept unless they are overriden explicitly. Flags with arguments must be specified as a single string, e.g. --some-flag=argument",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "description": "The API service configuration",
+          "type": "object",
+          "properties": {
+            "apiPort": {
+              "description": "The kubernetes API port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1
+            },
+            "konnectivityPort": {
+              "description": "The konnectivity port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1
+            },
+            "type": {
+              "description": "An ingress methods for a service",
+              "default": "LoadBalancer",
+              "type": "string",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "location": {
+      "type": "string"
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "nodeSubnetName": {
+          "type": "string"
+        },
+        "routeTableName": {
+          "type": "string"
+        },
+        "securityGroupName": {
+          "type": "string"
+        },
+        "vnetName": {
+          "type": "string"
+        }
+      }
+    },
+    "resourceGroup": {
+      "type": "string"
+    },
+    "rootVolumeSize": {
+      "type": "integer"
+    },
+    "sshPublicKey": {
+      "type": "string"
+    },
+    "subscriptionID": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "workersNumber": {
+      "type": "integer"
+    }
+  }
+}

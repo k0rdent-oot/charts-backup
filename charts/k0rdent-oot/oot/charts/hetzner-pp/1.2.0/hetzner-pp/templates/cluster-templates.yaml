@@ -1,0 +1,14 @@
+---
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterTemplate
+metadata:
+  name: hetzner-hask
+spec:
+  helm:
+    chartSpec:
+      chart: hetzner-hask
+      version: {{ .Chart.Version | quote }}
+      interval: 10m0s
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo

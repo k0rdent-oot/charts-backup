@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster azure-standalone-cp template",
+  "type": "object",
+  "properties": {
+    "bastion": {
+      "type": "object",
+      "properties": {
+        "bastionSpec": {
+          "type": "object",
+          "properties": {
+            "azureBastion": {
+              "type": "object"
+            }
+          }
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "clusterAnnotations": {
+      "type": "object"
+    },
+    "clusterIdentity": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "type": "object"
+    },
+    "clusterNetwork": {
+      "type": "object",
+      "properties": {
+        "pods": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "controlPlane": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "marketplace": {
+              "type": "object",
+              "properties": {
+                "offer": {
+                  "type": "string"
+                },
+                "publisher": {
+                  "type": "string"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "rootVolumeSize": {
+          "type": "integer"
+        },
+        "sshPublicKey": {
+          "type": "string"
+        },
+        "vmSize": {
+          "type": "string"
+        }
+      }
+    },
+    "controlPlaneNumber": {
+      "type": "integer"
+    },
+    "k0s": {
+      "type": "object",
+      "properties": {
+        "api": {
+          "type": "object",
+          "properties": {
+            "extraArgs": {
+              "type": "object"
+            }
+          }
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "location": {
+      "type": "string"
+    },
+    "subscriptionID": {
+      "type": "string"
+    },
+    "worker": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "marketplace": {
+              "type": "object",
+              "properties": {
+                "offer": {
+                  "type": "string"
+                },
+                "publisher": {
+                  "type": "string"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "rootVolumeSize": {
+          "type": "integer"
+        },
+        "sshPublicKey": {
+          "type": "string"
+        },
+        "vmSize": {
+          "type": "string"
+        }
+      }
+    },
+    "workersNumber": {
+      "type": "integer"
+    }
+  }
+}

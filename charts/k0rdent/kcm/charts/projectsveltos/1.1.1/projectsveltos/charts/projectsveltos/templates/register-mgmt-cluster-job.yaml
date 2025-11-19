@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: register-mgmt-cluster-job
+  labels:
+  {{- include "projectsveltos.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: {{ .Values.registerMgmtClusterJob.backoffLimit }}
+  template:
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - args:
+      {{- range .Values.registerMgmtClusterJob.registerMgmtCluster.args }}
+        - {{ . }}
+      {{- end }}
+      {{- range $key, $value := .Values.registerMgmtClusterJob.registerMgmtCluster.extraArgs }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key }}
+        {{- end }}
+      {{- end }}
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        {{- with .Values.registerMgmtClusterJob.registerMgmtCluster.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        image: {{ .Values.global.registry }}/{{ .Values.registerMgmtClusterJob.registerMgmtCluster.image.repository
+           }}{{- if .Values.global.useDigest }}@{{ .Values.registerMgmtClusterJob.registerMgmtCluster.image.digest }}{{- else }}:{{ .Values.registerMgmtClusterJob.registerMgmtCluster.image.tag | default .Chart.AppVersion }}{{- end }}
+        imagePullPolicy: {{ .Values.registerMgmtClusterJob.registerMgmtCluster.imagePullPolicy
+          }}
+        name: register-mgmt-cluster
+        resources: {{- toYaml .Values.registerMgmtClusterJob.registerMgmtCluster.resources
+          | nindent 10 }}
+        securityContext: {{- toYaml .Values.registerMgmtClusterJob.registerMgmtCluster.containerSecurityContext
+          | nindent 10 }}
+      {{- with .Values.registerMgmtClusterJob.registerMgmtCluster.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.registerMgmtClusterJob.registerMgmtCluster.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: OnFailure
+      serviceAccountName: register-mgmt-cluster
+  ttlSecondsAfterFinished: 240

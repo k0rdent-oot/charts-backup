@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster adopted-cluster template",
+  "type": "object",
+  "properties": {
+    "clusterAnnotations": {
+      "type": "object"
+    },
+    "clusterIdentity": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "type": "object"
+    },
+    "consecutiveFailureThreshold": {
+      "type": "integer"
+    }
+  }
+}

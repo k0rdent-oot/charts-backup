@@ -1,0 +1,59 @@
+# Cluster parameters
+workersNumber: 1 # @schema description: The number of the worker machines; type: number; minimum: 1; required: true
+
+clusterNetwork: # @schema description: The cluster network configuration; type: object
+  pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.244.0.0/16"
+  services: # @schema description: The network ranges from which service VIPs are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.96.0.0/12"
+
+clusterLabels: {} # @schema description: Labels to apply to the cluster; type: object; additionalProperties: true
+clusterAnnotations: {} # @schema description: Annotations to apply to the cluster; type: object; additionalProperties: true
+
+# EKS cluster parameters
+eksClusterName: "" # @schema description: The name of the EKS cluster in AWS. If unset, the default name will be created based on the namespace and name of the managed control plane; type: string
+region: "" # @schema description: AWS region to deploy the cluster in; type: string; required: true
+sshKeyName: "" # @schema description: The name of the key pair to securely connect to your instances. Valid values are empty string (do not use SSH keys), a valid SSH key name, or omitted (use the default SSH key name); type: [string, null]
+publicIP: false # @schema description: Specifies whether the instance should get a public IP; type: boolean
+
+associateOIDCProvider: false # @schema description: Automatically create an identity provider for the controller for use with IAM roles for service accounts; type: boolean
+oidcIdentityProviderConfig: {} # @schema description: The oidc provider config to be attached with this eks cluster; type: object
+
+vpcCni: # @schema description: The configuration options for the VPC CNI plugin; type: object
+  disable: false # @schema description: Indicates that the Amazon VPC CNI should be disabled; type: boolean
+  env: [] # @schema description: A list of environment variables to apply to the aws-node DaemonSet; type: array; item: object
+
+kubeProxy: # @schema description: Managed attributes of the kube-proxy daemonset; type: object
+  disable: false # @schema description: Disable set to true indicates that kube-proxy should be disabled. With EKS clusters kube-proxy is automatically installed into the cluster; type: boolean
+
+clusterIdentity: # @schema description: A reference to an identity to be used when reconciling the managed control plane; type: object; required: true
+  name: "aws-cluster-identity" # @schema description: Name of the identity; type: string; required: true
+  kind: "AWSClusterStaticIdentity" # @schema description: Kind of the identity; type: string; required: true
+
+# EKS machines parameters
+worker: # @schema description: The configuration of the worker machines; type: object
+  amiID: "" # @schema description: The ID of Amazon Machine Image; type: string
+  iamInstanceProfile: nodes.cluster-api-provider-aws.sigs.k8s.io # @schema description: A name of an IAM instance profile to assign to the instance; type: string; required: true
+  instanceType: "t3.small" # @schema description: The type of instance to create. Example: m4.xlarge; type: string; required: true
+  rootVolumeSize: 30 # @schema description: Specifies size (in Gi) of the root storage device. Must be greater than the image snapshot size or 8 (whichever is greater); type: integer; minimum: 8
+  nonRootVolumes: [] # @schema title: Non-root storage volumes; description: Configuration options for the non root storage volumes, format: https://pkg.go.dev/sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2#AWSMachineSpec.NonRootVolumes; type: array; item: object
+  imageLookup: # @schema description: AMI lookup parameters; type: object
+    format: "" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
+    org: "" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
+    baseOS: "" # @schema description: The name of the base operating system to use for image lookup the AMI is not set; type: string
+  uncompressedUserData: false # @schema description: Specify whether the user data is gzip-compressed before it is sent to ec2 instance. Cloud-init has built-in support for gzip-compressed user data. User data stored in aws secret manager is always gzip-compressed; type: boolean
+
+addons: # @schema description: The EKS addons to enable with the EKS cluster; type: array
+- name: aws-ebs-csi-driver # @schema description: The name of the addon; type: string
+  version: v1.37.0-eksbuild.1 # @schema description: The version of the addon to use; type: string
+  configuration: | # @schema description: Optional configuration of the EKS addon in YAML format; type: string
+    defaultStorageClass:
+      enabled: true
+  conflictResolution: "none" # @schema description: ConflictResolution is used to declare what should happen if there are parameter conflicts. Defaults to none; enum: overwrite,none; type: string
+  serviceAccountRoleARN: null # @schema description: ServiceAccountRoleArn is the ARN of an IAM role to bind to the addons service account; type: [string, null]
+
+# Kubernetes version
+kubernetes: # @schema description: Kubernetes parameters; type: object
+  version: v1.30.4 # @schema description: Kubernetes version to use; type: string; required: true

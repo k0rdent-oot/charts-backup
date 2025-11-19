@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster vsphere-hosted-cp template",
+  "type": "object",
+  "properties": {
+    "clusterAnnotations": {
+      "type": "object"
+    },
+    "clusterIdentity": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "type": "object"
+    },
+    "clusterNetwork": {
+      "type": "object",
+      "properties": {
+        "pods": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "controlPlaneEndpointIP": {
+      "type": "string"
+    },
+    "controlPlaneNumber": {
+      "type": "integer"
+    },
+    "cpus": {
+      "type": "integer"
+    },
+    "k0s": {
+      "description": "K0s parameters",
+      "type": "object",
+      "properties": {
+        "api": {
+          "description": "Kubernetes API server parameters",
+          "type": "object",
+          "properties": {
+            "extraArgs": {
+              "description": "Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process",
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "arch": {
+          "description": "K0s Download URL Arch",
+          "default": "amd64",
+          "type": "string",
+          "enum": [
+            "amd64",
+            "arm64",
+            "arm"
+          ]
+        },
+        "network": {
+          "description": "Kubernetes cluster network configuration",
+          "type": "object",
+          "properties": {
+            "calico": {
+              "description": "Calico-specific configuration",
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "description": "Calico network mode",
+                  "examples": [
+                    "ipip",
+                    "vxlan",
+                    "never"
+                  ],
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": true
+            },
+            "provider": {
+              "description": "Network provider to use",
+              "examples": [
+                "kuberouter",
+                "calico",
+                "custom"
+              ],
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": true
+        },
+        "version": {
+          "description": "K0s version",
+          "type": "string"
+        },
+        "workerArgs": {
+          "description": "Args specifies extra arguments to be passed to k0s worker. See: https://docs.k0sproject.io/stable/worker-node-config/ See: https://docs.k0sproject.io/stable/cli/k0s_worker/",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "k0smotron": {
+      "description": "K0smotron parameters",
+      "type": "object",
+      "properties": {
+        "controllerPlaneFlags": {
+          "description": "ControlPlaneFlags allows to configure additional flags for k0s control plane and to override existing ones. The default flags are kept unless they are overriden explicitly. Flags with arguments must be specified as a single string, e.g. --some-flag=argument",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "description": "The API service configuration",
+          "type": "object",
+          "properties": {
+            "apiPort": {
+              "description": "The kubernetes API port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1
+            },
+            "konnectivityPort": {
+              "description": "The konnectivity port. If empty k0smotron will pick it automatically",
+              "type": "number",
+              "maximum": 65535,
+              "minimum": 1
+            },
+            "type": {
+              "description": "An ingress methods for a service",
+              "default": "LoadBalancer",
+              "type": "string",
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "memory": {
+      "type": "integer"
+    },
+    "network": {
+      "type": "string"
+    },
+    "rootVolumeSize": {
+      "type": "integer"
+    },
+    "ssh": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        }
+      }
+    },
+    "vmTemplate": {
+      "type": "string"
+    },
+    "vsphere": {
+      "type": "object",
+      "properties": {
+        "datacenter": {
+          "type": "string"
+        },
+        "datastore": {
+          "type": "string"
+        },
+        "folder": {
+          "type": "string"
+        },
+        "resourcePool": {
+          "type": "string"
+        },
+        "server": {
+          "type": "string"
+        },
+        "thumbprint": {
+          "type": "string"
+        }
+      }
+    },
+    "workersNumber": {
+      "type": "integer"
+    }
+  }
+}

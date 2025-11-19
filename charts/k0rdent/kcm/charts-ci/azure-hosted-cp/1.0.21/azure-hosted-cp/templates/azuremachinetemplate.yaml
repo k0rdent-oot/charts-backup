@@ -1,0 +1,28 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureMachineTemplate
+metadata:
+  name: {{ include "azuremachinetemplate.name" . }}
+spec:
+  template:
+    spec:
+      osDisk:
+        diskSizeGB: {{ .Values.rootVolumeSize }}
+        osType: Linux
+      {{- if not ( .Values.sshPublicKey | empty) }}
+      sshPublicKey: {{ .Values.sshPublicKey }}
+      {{- end }}
+      vmSize: {{ required ".Values.vmSize is required" .Values.vmSize }}
+      {{- if not (quote .Values.image | empty) }}
+      {{- with .Values.image }}
+      image:
+        {{- if .id }}
+        id: {{ .id }}
+        {{- else if .computeGallery }}
+        computeGallery:
+          {{- toYaml .computeGallery | nindent 10 }}
+        {{- else if .marketplace }}
+        marketplace:
+          {{- toYaml .marketplace | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- end }}

@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: oot-repo
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    k0rdent.mirantis.com/managed: "true"
+spec:
+  type: oci
+  url: 'oci://ghcr.io/k0rdent-oot/oot/charts'
+  interval: 10m0s

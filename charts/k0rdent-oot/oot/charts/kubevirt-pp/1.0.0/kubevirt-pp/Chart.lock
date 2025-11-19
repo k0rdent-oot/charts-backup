@@ -1,6 +1,0 @@
-dependencies:
-- name: kubevirt
-  repository: oci://ghcr.io/k0rdent-oot/oot/charts
-  version: 0.3.0
-digest: sha256:cc7e51eb1c852893a206b2618a77eebf2d5a1ad5e9b1aa6d8b381e822bd00b51
-generated: "2025-06-13T17:22:57.013499823Z"

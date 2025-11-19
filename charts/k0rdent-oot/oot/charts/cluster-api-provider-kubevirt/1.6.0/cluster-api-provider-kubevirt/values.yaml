@@ -1,0 +1,7 @@
+config:
+  secret:
+    create: false
+    name: ""
+    data: {}
+
+manager: {}

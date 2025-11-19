@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: v8.2.0
-description: A Helm chart for deploying the snapshot controller
-name: kubernetes-csi-external-snapshotter
-type: application
-version: v8.2.0
