@@ -1,0 +1,106 @@
+# Default values for doca-provisioning
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/s3rj1k/nvidia-doca-lite
+  pullPolicy: IfNotPresent
+  tag: "" # Defaults to chart appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  fsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  metricsPort: 8080
+  healthPort: 8081
+
+resources:
+  limits:
+    cpu: 2
+    memory: 2Gi
+  requests:
+    cpu: 1
+    memory: 1Gi
+
+# Leader election settings
+leaderElection:
+  enabled: true
+
+# Controller settings
+controller:
+  # Metrics bind address
+  metricsAddr: ":8080"
+  # Health probe bind address
+  probeAddr: ":8081"
+  # Enable HTTP/2
+  enableHTTP2: false
+  # Concurrency
+  concurrency: 1
+  # Sync period
+  syncPeriod: "10m"
+
+# DPU-specific settings
+dpu:
+  # DPU install interface (InstallViaHostAgent or InstallViaRedFish)
+  installInterface: "InstallViaHostAgent"
+  # Max parallel installations
+  maxParallelInstallations: 50
+  # Enable DPU discovery
+  enableDiscovery: true
+  # Multi-DPU operations sync wait time
+  multiDPUOperationsSyncWaitTime: "30s"
+  # Max unavailable DPU nodes
+  maxUnavailableDPUNodes: 50
+
+# DMS (DPU Management Service) settings
+dms:
+  # DMS image (leave empty to use default)
+  image: ""
+  # DMS timeout in seconds
+  timeout: 900
+  # DMS pod timeout
+  podTimeout: "5m"
+  # Environment variables for DMS pods
+  podEnvs: []
+
+# BFB (Boot Firmware Binary) settings
+bfb:
+  # PVC for BFB storage
+  pvc: ""
+  # BFB registry hostname
+  registry: ""
+  # Custom bf.cfg template file
+  cfgTemplateFile: ""
+
+# Custom CA certificate secret
+customCASecret: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
