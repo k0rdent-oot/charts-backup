@@ -1,0 +1,13 @@
+apiVersion: v2
+appVersion: "1763656528"
+description: NVIDIA DOCA Platform Provisioning Controller
+keywords:
+- nvidia
+- doca
+- dpu
+- provisioning
+maintainers:
+- name: NVIDIA
+name: doca-provisioning
+type: application
+version: 42.1763656528.0-f3a2a399

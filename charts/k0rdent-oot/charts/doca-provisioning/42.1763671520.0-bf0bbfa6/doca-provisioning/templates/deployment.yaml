@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "doca-provisioning.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "doca-provisioning.labels" . | nindent 4 }}
+    app.kubernetes.io/component: manager
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "doca-provisioning.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "doca-provisioning.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "doca-provisioning.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: manager
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /provisioning
+          args:
+            - --metrics-bind-address={{ .Values.controller.metricsAddr }}
+            - --health-probe-bind-address={{ .Values.controller.probeAddr }}
+            {{- if .Values.leaderElection.enabled }}
+            - --leader-elect
+            {{- end }}
+            {{- if .Values.controller.enableHTTP2 }}
+            - --enable-http2
+            {{- end }}
+            - --concurrency={{ .Values.controller.concurrency }}
+            - --sync-period={{ .Values.controller.syncPeriod }}
+            - --dpu-install-interface={{ .Values.dpu.installInterface }}
+            - --max-dpu-parallel-installations={{ .Values.dpu.maxParallelInstallations }}
+            - --enable-dpu-discovery={{ .Values.dpu.enableDiscovery }}
+            - --multi-dpu-operations-sync-wait-time={{ .Values.dpu.multiDPUOperationsSyncWaitTime }}
+            - --max-unavailable-dpu-nodes={{ .Values.dpu.maxUnavailableDPUNodes }}
+            {{- if .Values.dms.image }}
+            - --dms-image={{ .Values.dms.image }}
+            {{- end }}
+            - --dms-timeout={{ .Values.dms.timeout }}
+            - --dms-pod-timeout={{ .Values.dms.podTimeout }}
+            {{- range .Values.dms.podEnvs }}
+            - --dms-pod-envs={{ . }}
+            {{- end }}
+            {{- if .Values.bfb.pvc }}
+            - --bfb-pvc={{ .Values.bfb.pvc }}
+            {{- end }}
+            {{- if .Values.bfb.registry }}
+            - --bfb-registry={{ .Values.bfb.registry }}
+            {{- end }}
+            {{- if .Values.bfb.cfgTemplateFile }}
+            - --bf-cfg-template-file={{ .Values.bfb.cfgTemplateFile }}
+            {{- end }}
+            {{- if .Values.customCASecret }}
+            - --custom-CA-secret={{ .Values.customCASecret }}
+            {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+            {{- if .Values.webhooks.enabled }}
+            - name: webhook-server
+              containerPort: 9443
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.webhooks.enabled }}
+          volumeMounts:
+            - name: cert
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+          {{- end }}
+      {{- if .Values.webhooks.enabled }}
+      volumes:
+        - name: cert
+          secret:
+            secretName: {{ include "doca-provisioning.fullname" . }}-webhook-server-cert
+            defaultMode: 420
+      {{- end }}
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
