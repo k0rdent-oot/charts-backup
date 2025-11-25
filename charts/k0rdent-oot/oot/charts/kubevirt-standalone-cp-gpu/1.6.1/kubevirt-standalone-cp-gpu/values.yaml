@@ -1,0 +1,335 @@
+# @schema title: KubeVirt Cluster Configuration
+# @schema description: Configuration for KubeVirt based Kubernetes cluster
+
+# Cluster parameters
+controlPlaneNumber: 1 # @schema description: The number of the control plane nodes; type: number; minimum: 1
+workersNumber: 1 # @schema description: The number of the worker nodes; type: number; minimum: 1
+
+clusterIdentity: # @schema description: The KubeVirt Service Account credentials secret reference, auto-populated; type: object
+  name: "" # @schema description: The KubeVirt Service Account credentials secret name, auto-populated; type: string
+
+cluster: {} # @schema description: Basic cluster information; type: object
+  # kubeConfigSecretRef: "kubevirt-config" # @schema description: The name of the secret containing KubeVirt kubeconfig; type: string
+  # name: "" # @schema description: The name of the cluster; type: string
+  # namespace: "default" # @schema description: The namespace where cluster resources will be created; type: string
+
+clusterNetwork: # @schema description: The cluster network configuration; type: object
+  pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.243.0.0/16"
+  services: # @schema description: The network ranges from which service VIPs are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.95.0.0/16"
+
+clusterLabels: {} # @schema description: Labels to apply to the cluster; type: object; additionalProperties: true
+clusterAnnotations: {} # @schema description: Annotations to apply to the cluster; type: object; additionalProperties: true
+
+# KubeVirt machines parameters
+controlPlane: # @schema description: Control plane parameters; type: object
+  runStrategy: Always # @schema description: VM run strategy (Always, Once, Manual, Halted); type: string; enum: [Always, Once, Manual, Halted]
+  cpus: 2 # @schema description: Number of CPUs allocated to control plane nodes; type: integer; minimum: 1
+  memory: "4Gi" # @schema description: Memory allocated to control plane nodes; type: string; pattern: ^[0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?$
+  bootstrapCheckStrategy: none # @schema description: Strategy for bootstrap checks; type: string; enum: [none, ssh]
+  image: ghcr.io/k0rdent-oot/kubevirt-container-disk:debian-latest # @schema description: Container disk image for control plane nodes; type: string
+  imagePullPolicy: IfNotPresent # @schema description: Image pull policy for container disk; type: string; enum: [Always, IfNotPresent, Never]
+  useSystemHostname: false # @schema description: Use system hostname for kubernetes node name; type: boolean
+  # ioThreadsPolicy: auto # @schema description: IO threads policy (shared or auto); type: string; enum: [shared, auto]
+  # blockMultiQueue: true # @schema description: Enable Virtio Block Multi-Queue; type: boolean
+  # diskCache: writethrough # @schema description: Disk cache mode (none, writethrough, writeback); type: string; enum: [none, writethrough, writeback]
+  preInstalledK0s: false # @schema description: Whether k0s binary is pre-installed on the node; type: boolean
+  preStartCommands: # @schema description: Commands to run before starting K0s service; type: array; item: string
+    - apt update
+    - env DEBIAN_FRONTEND=noninteractive apt -y install qemu-guest-agent
+    - systemctl enable --now qemu-guest-agent
+  # postStartCommands: [] # @schema description: Commands to run after starting k0s; type: array; items: string
+
+  # Network interface configuration
+  defaultNetworkInterface: # @schema description: Default network interface configuration; type: object
+    type: bridge # @schema description: Interface type (bridge, masquerade, sriov); type: string; enum: [bridge, masquerade, sriov]
+    # ports: # @schema description: Port forwarding for masquerade type; type: array
+    #   - port: 80 # @schema description: Port number; type: integer
+    #     protocol: TCP # @schema description: Protocol; type: string
+
+  additionalNetworkInterfaces: [] # @schema description: Additional network interfaces; type: array
+  #  - name: bridge-net # @schema description: Interface name; type: string
+  #    multus: # @schema description: Multus configuration; type: object
+  #      networkName: bridge-1560 # @schema description: Network name; type: string
+  dataVolumes: [] # @schema description: Data volume configuration; type: array
+  #  - name: root # @schema description: Volume name; type: string
+  #    accessModes: ReadWriteMany # @schema description: Access modes; type: string
+  #    storage: 50Gi # @schema description: Storage size; type: string
+  #    volumeMode: Block # @schema description: Volume mode; type: string
+  #    storageClassName: block-pool # @schema description: Storage class name; type: string
+  #    source: # @schema description: Source configuration; type: object
+  #      snapshot: # @schema description: Snapshot source; type: object
+  #        namespace: kcm-system # @schema description: Snapshot namespace; type: string
+  #        name: goldenimage-ubuntu2204 # @schema description: Snapshot name; type: string
+  #  - name: data # @schema description: Volume name; type: string
+  #    accessModes: ReadWriteMany # @schema description: Access modes; type: string
+  #    storage: 1Gi # @schema description: Storage size; type: string
+  #    volumeMode: Block # @schema description: Volume mode; type: string
+  #    storageClassName: block-pool # @schema description: Storage class name; type: string
+  #    source: # @schema description: Source configuration; type: object
+  #      blank: {} # @schema description: Blank source; type: object
+  files: [] # @schema description: Files to create; type: array
+  #  - content: | # @schema description: File content; type: string
+  #        12345
+  #        67896
+  #        10111
+  #    permissions: "0644" # @schema description: File permissions; type: string
+  #    path: /etc/k0s/test.yaml # @schema description: File path; type: string
+
+  # VM and template annotations
+  annotations: {} # @schema description: Annotations to apply to VirtualMachine and template; type: object; additionalProperties: true
+
+  # CPU configuration
+  cpu: # @schema description: CPU configuration; type: object
+    dedicatedCpuPlacement: false # @schema description: Enable dedicated CPU placement; type: boolean
+    isolateEmulatorThread: false # @schema description: Isolate emulator thread; type: boolean
+    model: "" # @schema description: CPU model (e.g., host-passthrough); type: string
+    numa: {} # @schema description: NUMA configuration; type: object; additionalProperties: true
+
+  # Memory configuration
+  memoryConfig: # @schema description: Advanced memory configuration; type: object
+    hugepages: {} # @schema description: Hugepages configuration; type: object; additionalProperties: true
+    guest: "" # @schema description: Guest memory (e.g., 512Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+    requests: "" # @schema description: Memory requests (e.g., 528Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+    limits: "" # @schema description: Memory limits (e.g., 528Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+
+  # Device configuration
+  devices: # @schema description: Device configuration; type: object
+    autoattachMemBalloon: true # @schema description: Auto-attach memory balloon; type: boolean
+    autoattachSerialConsole: true # @schema description: Auto-attach serial console; type: boolean
+    autoattachGraphicsDevice: true # @schema description: Auto-attach graphics device; type: boolean
+    hostDevices: [] # @schema description: Host devices to attach; type: array
+    #  - deviceName: nvidia.com/gpu # @schema description: Device name; type: string
+    #    name: gpu1 # @schema description: Device name; type: string
+    #  - deviceName: mellanox.com/connectx # @schema description: Device name; type: string
+    #    name: connectx1 # @schema description: Device name; type: string
+
+  # Node selector
+  nodeSelector: {} # @schema description: Node selector for VM placement; type: object; additionalProperties: true
+
+  # Network configuration
+  networkInterfaceMultiqueue: true # @schema description: Enable network interface multiqueue; type: boolean
+
+  # Cloud-init configuration
+  cloudInit: # @schema description: Cloud-init configuration; type: object
+    userData: "" # @schema description: Cloud-init user data; type: string
+
+  # Host disk configuration
+  hostDisks: [] # @schema description: Host disk configuration; type: array
+    # - name: host-disk # @schema description: Host disk name; type: string
+    #   path: /opt/os.raw # @schema description: Host disk path; type: string
+    #   type: Disk # @schema description: Host disk type (Disk or BlockDevice); type: string; enum: [Disk, BlockDevice]
+
+worker: # @schema description: Worker parameters; type: object
+  runStrategy: Once # @schema description: VM run strategy (Always, Once, Manual, Halted); type: string; enum: [Always, Once, Manual, Halted]
+  cpus: 2 # @schema description: Number of CPUs allocated to worker nodes; type: integer; minimum: 1
+  memory: "4Gi" # @schema description: Memory allocated to worker nodes; type: string; pattern: ^[0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?$
+  bootstrapCheckStrategy: none # @schema description: Strategy for bootstrap checks; type: string; enum: [none, ssh]
+  image: ghcr.io/k0rdent-oot/kubevirt-container-disk:debian-latest # @schema description: Container disk image for worker nodes; type: string
+  imagePullPolicy: IfNotPresent # @schema description: Image pull policy for container disk; type: string; enum: [Always, IfNotPresent, Never]
+  useSystemHostname: false # @schema description: Use system hostname for kubernetes node name; type: boolean
+  # ioThreadsPolicy: auto # @schema description: IO threads policy (shared or auto); type: string; enum: [shared, auto]
+  # blockMultiQueue: true # @schema description: Enable Virtio Block Multi-Queue; type: boolean
+  # diskCache: writethrough # @schema description: Disk cache mode (none, writethrough, writeback); type: string; enum: [none, writethrough, writeback]
+  preInstalledK0s: false # @schema description: Whether k0s binary is pre-installed on the node; type: boolean
+  preStartCommands: # @schema description: Commands to run before starting K0s service; type: array; item: string
+    - apt update
+    - env DEBIAN_FRONTEND=noninteractive apt -y install qemu-guest-agent
+    - systemctl enable --now qemu-guest-agent
+  # postStartCommands: [] # @schema description: Commands to run after starting k0s worker; type: array; items: string
+
+  # VM and template annotations
+  annotations: {} # @schema description: Annotations to apply to VirtualMachine and template; type: object; additionalProperties: true
+
+  # CPU configuration
+  cpu: # @schema description: CPU configuration; type: object
+    dedicatedCpuPlacement: false # @schema description: Enable dedicated CPU placement; type: boolean
+    isolateEmulatorThread: false # @schema description: Isolate emulator thread; type: boolean
+    model: "" # @schema description: CPU model (e.g., host-passthrough); type: string
+    numa: {} # @schema description: NUMA configuration; type: object; additionalProperties: true
+
+  # Memory configuration
+  memoryConfig: # @schema description: Advanced memory configuration; type: object
+    hugepages: {} # @schema description: Hugepages configuration; type: object; additionalProperties: true
+    guest: "" # @schema description: Guest memory (e.g., 512Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+    requests: "" # @schema description: Memory requests (e.g., 528Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+    limits: "" # @schema description: Memory limits (e.g., 528Gi); type: string; pattern: ^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?)?$
+
+  # Device configuration
+  devices: # @schema description: Device configuration; type: object
+    autoattachMemBalloon: true # @schema description: Auto-attach memory balloon; type: boolean
+    autoattachSerialConsole: true # @schema description: Auto-attach serial console; type: boolean
+    autoattachGraphicsDevice: true # @schema description: Auto-attach graphics device; type: boolean
+    hostDevices: [] # @schema description: Host devices to attach; type: array
+    #  - deviceName: nvidia.com/gpu # @schema description: Device name; type: string
+    #    name: gpu1 # @schema description: Device name; type: string
+    #  - deviceName: mellanox.com/connectx # @schema description: Device name; type: string
+    #    name: connectx1 # @schema description: Device name; type: string
+
+  # Node selector
+  nodeSelector: {} # @schema description: Node selector for VM placement; type: object; additionalProperties: true
+
+  # Network configuration
+  networkInterfaceMultiqueue: true # @schema description: Enable network interface multiqueue; type: boolean
+
+  # Network interface configuration
+  defaultNetworkInterface: # @schema description: Default network interface configuration; type: object
+    type: bridge # @schema description: Interface type (bridge, masquerade, sriov); type: string; enum: [bridge, masquerade, sriov]
+    # ports: [] # @schema description: Port forwarding for masquerade type; type: array
+    #  - port: 80 # @schema description: Port number; type: integer
+    #    protocol: TCP # @schema description: Protocol; type: string
+
+  # Cloud-init configuration
+  cloudInit: # @schema description: Cloud-init configuration; type: object
+    userData: "" # @schema description: Cloud-init user data; type: string
+
+  # Host disk configuration
+  hostDisks: [] # @schema description: Host disk configuration; type: array
+    # - name: host-disk # @schema description: Host disk name; type: string
+    #   path: /opt/os.raw # @schema description: Host disk path; type: string
+    #   type: Disk # @schema description: Host disk type (Disk or BlockDevice); type: string; enum: [Disk, BlockDevice]
+
+  additionalNetworkInterfaces: [] # @schema description: Additional network interfaces; type: array
+  #  - name: bridge-net # @schema description: Interface name; type: string
+  #    multus: # @schema description: Multus configuration; type: object
+  #      networkName: bridge-1560 # @schema description: Network name; type: string
+  dataVolumes: [] # @schema description: Data volume configuration; type: array
+  #  - name: root # @schema description: Volume name; type: string
+  #    accessModes: ReadWriteMany # @schema description: Access modes; type: string
+  #    storage: 50Gi # @schema description: Storage size; type: string
+  #    volumeMode: Block # @schema description: Volume mode; type: string
+  #    storageClassName: block-pool # @schema description: Storage class name; type: string
+  #    source: # @schema description: Source configuration; type: object
+  #      snapshot: # @schema description: Snapshot source; type: object
+  #        namespace: kcm-system # @schema description: Snapshot namespace; type: string
+  #        name: goldenimage-ubuntu2204 # @schema description: Snapshot name; type: string
+  #  - name: data # @schema description: Volume name; type: string
+  #    accessModes: ReadWriteMany # @schema description: Access modes; type: string
+  #    storage: 1Gi # @schema description: Storage size; type: string
+  #    volumeMode: Block # @schema description: Volume mode; type: string
+  #    storageClassName: block-pool # @schema description: Storage class name; type: string
+  #    source: # @schema description: Source configuration; type: object
+  #      blank: {} # @schema description: Blank source; type: object
+  files: [] # @schema description: Files to create; type: array
+  #  - content: | # @schema description: File content; type: string
+  #        12345
+  #        67896
+  #        10111
+  #    permissions: "0644" # @schema description: File permissions; type: string
+  #    path: /etc/k0s/test.yaml # @schema description: File path; type: string
+
+# K0s parameters
+k0s: # @schema description: K0s parameters; type: object
+  version: v1.33.4+k0s.0 # @schema description: K0s version; type: string
+  downloadURL: "" # @schema description: Custom download URL for K0s binary. If empty, uses default K0s release URL; type: string
+  disableComponents: # @schema description: List of k0s components to disable; type: array; items: string
+    - konnectivity-server # @schema description: Component to disable; type: string
+  clusterConfig: # @schema description: Cluster configuration metadata; type: object
+    name: k0s # @schema description: K0s cluster config name; type: string
+    namespace: kube-system # @schema description: K0s cluster config namespace; type: string
+  telemetry: # @schema description: Telemetry configuration; type: object
+    enabled: false # @schema description: Enable telemetry; type: boolean
+  storage: # @schema description: Storage configuration; type: object
+    etcd: {} # @schema description: Etcd configuration options; type: object; additionalProperties: true
+      # peerAddress: 192.168.68.104 # @schema description: Etcd peer address; type: string
+      # ca: # @schema description: Certificate authority configuration; type: object
+      #   expiresAfter: 87600h # @schema description: CA certificate expiry; type: string
+      #   certificatesExpireAfter: 8760h # @schema description: Certificates expiry; type: string
+  cloudProvider: # @schema description: Cloud provider configuration; type: object
+    enabled: false # @schema description: Enable cloud provider support; type: boolean
+  api: # @schema description: Kubernetes API server parameters; type: object; additionalProperties: true
+    # externalAddress: 192.168.1.100 # @schema description: External address for load balancer (required for HA); type: string
+    # sans: # @schema description: Subject alternative names for API server certificate; type: array; items: string
+    #   - 192.168.1.100 # @schema description: Additional SAN entry; type: string
+    #   - lb.example.com # @schema description: Additional SAN entry; type: string
+    extraArgs: {} # @schema description: Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process; type: object; additionalProperties: true
+  network: # @schema description: Network configuration for K0s; type: object
+    vxlanPort: 6789 # @schema description: Port to use for VXLAN tunnels; type: number; minimum: 1; maximum: 65535
+    dualStack: # @schema description: Dual stack configuration; type: object
+      enabled: false # @schema description: Enable dual stack networking; type: boolean
+      IPv6podCIDR: "fd00::/108" # @schema description: IPv6 pod CIDR for dual stack; type: string
+      IPv6serviceCIDR: "fd01::/108" # @schema description: IPv6 service CIDR for dual stack; type: string
+    calico: # @schema description: Calico network provider configuration; type: object
+      mode: vxlan # @schema description: Calico backend mode; type: string; enum: [vxlan, ipip, bird]
+      overlay: Always # @schema description: Overlay mode; type: string; enum: [Always, CrossSubnet, Never]
+      vxlanPort: 6789 # @schema description: UDP port for VXLAN (uses network.vxlanPort if not set); type: integer; minimum: 1; maximum: 65535
+      vxlanVNI: 4096 # @schema description: Virtual network ID for VXLAN; type: integer; minimum: 1; maximum: 16777215
+      mtu: 0 # @schema description: MTU for overlay network (0 = auto-detect optimal MTU); type: integer; minimum: 0; maximum: 9000
+      # wireguard: false # @schema description: Enable WireGuard-based encryption; type: boolean
+      # flexVolumeDriverPath: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds # @schema description: Host path for Calico flex-volume-driver; type: string
+      # ipAutodetectionMethod: can-reach=8.8.8.8 # @schema description: Method to detect node IP for inter-node routing; type: string
+      envVars: # @schema description: Calico environment variables (overrides k0s defaults); type: object; additionalProperties: true
+        FELIX_IGNORELOOSERPF: "true" # @schema description: Felix ignore loose RPF; type: string
+        FELIX_ALLOWVXLANPACKETSFROMWORKLOADS: "true" # @schema description: Felix allow VXLAN packets from workloads; type: string
+        # CALICO_IPV4POOL_CIDR: "{{ spec.network.podCIDR }}" # @schema description: IPv4 pool CIDR; type: string
+        # CALICO_DISABLE_FILE_LOGGING: "true" # @schema description: Disable file logging; type: string
+        # FELIX_DEFAULTENDPOINTTOHOSTACTION: "ACCEPT" # @schema description: Default endpoint to host action; type: string
+        # FELIX_LOGSEVERITYSCREEN: "info" # @schema description: Log severity for screen output; type: string
+        # FELIX_HEALTHENABLED: "true" # @schema description: Enable health checks; type: string
+        # FELIX_PROMETHEUSMETRICSENABLED: "true" # @schema description: Enable Prometheus metrics; type: string
+        # FELIX_FEATUREDETECTOVERRIDE: "ChecksumOffloadBroken=true" # @schema description: Feature detection override; type: string
+        # Single-stack mode variables:
+        # FELIX_IPV6SUPPORT: "false" # @schema description: IPv6 support (single-stack); type: string
+        # Dual-stack mode variables:
+        # CALICO_IPV6POOL_NAT_OUTGOING: "true" # @schema description: IPv6 pool NAT outgoing (dual-stack); type: string
+        # FELIX_IPV6SUPPORT: "true" # @schema description: IPv6 support (dual-stack); type: string
+        # IP6: "autodetect" # @schema description: IPv6 auto-detection (dual-stack); type: string
+        # CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}" # @schema description: IPv6 pool CIDR (dual-stack); type: string
+    # controlPlaneLoadBalancing: # @schema description: Control plane load balancing configuration; type: object
+    #   enabled: true # @schema description: Enable control plane load balancing; type: boolean
+    #   type: Keepalived # @schema description: Load balancing type (Keepalived or EnvoyProxy); type: string; enum: [Keepalived, EnvoyProxy]
+    #   keepalived: # @schema description: Keepalived configuration; type: object
+    #     vrrpInstances: # @schema description: VRRP instances configuration; type: array
+    #       - virtualIPs: ["172.16.0.100/16"] # @schema description: Virtual IP addresses; type: array; items: string
+    #         authPass: "my-password" # @schema description: Authentication password; type: string
+    #         vrid: 51 # @schema description: Virtual router ID; type: integer; minimum: 1; maximum: 255
+  extensions: # @schema description: K0s extensions configuration; type: object
+    helm: # @schema description: Helm extensions configuration; type: object
+      charts: # @schema description: Helm charts configuration; type: object
+        metallb: # @schema description: MetalLB configuration; type: object
+          enabled: false # @schema description: Enable MetalLB helm chart; type: boolean
+          chartname: metallb/metallb # @schema description: Chart name with repository; type: string
+          name: metallb # @schema description: Release name; type: string
+          namespace: metallb-system # @schema description: Namespace for deployment; type: string
+          timeout: 15m # @schema description: Helm chart installation timeout; type: string
+        localPathStorage: # @schema description: Local path provisioner configuration; type: object
+          enabled: false # @schema description: Enable local path provisioner helm chart; type: boolean
+          chartname: containeroo/local-path-provisioner # @schema description: Chart name with repository; type: string
+          name: local-path-storage # @schema description: Release name; type: string
+          namespace: local-path-storage # @schema description: Namespace for deployment; type: string
+          timeout: 15m # @schema description: Helm chart installation timeout; type: string
+          values: # @schema description: Helm values configuration; type: object
+            storageClass: # @schema description: Storage class configuration; type: object
+              defaultClass: true # @schema description: Set as default storage class; type: boolean
+      repositories: # @schema description: Helm repositories configuration; type: object
+        metallb: # @schema description: MetalLB repository configuration; type: object
+          name: metallb # @schema description: Repository name; type: string
+          url: https://metallb.github.io/metallb # @schema description: Repository URL; type: string
+        containeroo: # @schema description: Containeroo repository configuration; type: object
+          name: containeroo # @schema description: Repository name; type: string
+          url: https://charts.containeroo.ch # @schema description: Repository URL; type: string
+  workerProfiles: # @schema description: Worker node profiles configuration; type: array; additionalProperties: true
+    - name: numa # @schema description: Profile name; type: string
+      values: # @schema description: Profile values; type: object; additionalProperties: true
+        topologyManagerPolicy: best-effort # @schema description: Topology manager policy; type: string
+        cpuManagerPolicy: static # @schema description: CPU manager policy; type: string
+        cpuManagerPolicyOptions: # @schema description: CPU manager policy options; type: object
+          full-pcpus-only: "true" # @schema description: Full PCPUs only; type: string
+          distribute-cpus-across-numa: "true" # @schema description: Distribute CPUs across NUMA; type: string
+        reservedSystemCPUs: "0" # @schema description: Reserved system CPUs; type: string
+        reservedMemory: # @schema description: Reserved memory configuration; type: array
+          - limits: # @schema description: Memory limits; type: object
+              memory: 2Gi # @schema description: Memory limit; type: string; pattern: ^[0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|m|k|M|G|T|P|E)?$
+            numaNode: 0 # @schema description: NUMA node; type: integer
+        kubeReservedCgroup: "" # @schema description: Kube reserved cgroup; type: string
+  helmCharts: {} # @schema description: Helm chart deployment configurations; type: object
+
+machineHealthCheck: # @schema description: Machine health check configuration; type: object
+  enabled: false # @schema description: Enable machine health checks; type: boolean
+  maxUnhealthy: 40% # @schema description: Maximum unhealthy machines threshold; type: string
+
+# Generic objects creation
+objects: [] # @schema description: List of generic Kubernetes objects to create; type: array

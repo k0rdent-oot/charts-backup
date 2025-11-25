@@ -1,0 +1,10 @@
+annotations:
+  commit: c2430c728b0d38df43a8ad38120c4faa613bddf0
+  created: "2025-10-16T08:03:14+00:00"
+  dpfVersion: v25.7.1
+apiVersion: v2
+appVersion: v25.7.0
+description: DPF Operator manages the lifecycle of a DOCA Platform Framework system.
+name: dpf-operator
+type: application
+version: "1764030616"
