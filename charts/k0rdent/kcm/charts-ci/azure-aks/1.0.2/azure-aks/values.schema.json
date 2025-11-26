@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A KCM cluster azure-aks template",
+  "type": "object",
+  "properties": {
+    "apiServerAccessProfile": {
+      "type": "object",
+      "properties": {
+        "authorizedIPRanges": {
+          "type": "array"
+        },
+        "disableRunCommand": {
+          "type": "boolean"
+        },
+        "enablePrivateCluster": {
+          "type": "boolean"
+        },
+        "enablePrivateClusterPublicFQDN": {
+          "type": "boolean"
+        },
+        "privateDNSZone": {
+          "type": "string"
+        }
+      }
+    },
+    "autoUpgradeProfile": {
+      "type": "object",
+      "properties": {
+        "nodeOSUpgradeChannel": {
+          "type": "string"
+        },
+        "upgradeChannel": {
+          "type": "string"
+        }
+      }
+    },
+    "azureMonitorProfile": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "kubeStateMetrics": {
+              "type": "object",
+              "properties": {
+                "metricAnnotationsAllowList": {
+                  "type": "string"
+                },
+                "metricLabelsAllowlist": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "clusterAnnotations": {
+      "type": "object"
+    },
+    "clusterIdentity": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterLabels": {
+      "type": "object"
+    },
+    "clusterNetwork": {
+      "type": "object",
+      "properties": {
+        "pods": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "object",
+          "properties": {
+            "cidrBlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dnsServiceIP": {
+      "type": "string"
+    },
+    "kubernetes": {
+      "type": "object",
+      "properties": {
+        "networkPlugin": {
+          "type": "string"
+        },
+        "networkPolicy": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "location": {
+      "type": "string"
+    },
+    "machinePools": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "object",
+          "properties": {
+            "autoscaling": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxCount": {
+                  "type": "integer"
+                },
+                "minCount": {
+                  "type": "integer"
+                }
+              }
+            },
+            "count": {
+              "type": "integer"
+            },
+            "enableNodePublicIP": {
+              "type": "boolean"
+            },
+            "maxPods": {
+              "type": "integer"
+            },
+            "nodeLabels": {
+              "type": "object"
+            },
+            "nodeTaints": {
+              "type": "array"
+            },
+            "osDiskSizeGB": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            },
+            "vmSize": {
+              "type": "string"
+            }
+          }
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "autoscaling": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxCount": {
+                  "type": "integer"
+                },
+                "minCount": {
+                  "type": "integer"
+                }
+              }
+            },
+            "count": {
+              "type": "integer"
+            },
+            "enableNodePublicIP": {
+              "type": "boolean"
+            },
+            "maxPods": {
+              "type": "integer"
+            },
+            "nodeLabels": {
+              "type": "object"
+            },
+            "nodeTaints": {
+              "type": "array"
+            },
+            "osDiskSizeGB": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            },
+            "vmSize": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "oidcIssuerProfile": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "securityProfile": {
+      "type": "object",
+      "properties": {
+        "azureKeyVaultKms": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "keyId": {
+              "type": "string"
+            },
+            "keyVaultNetworkAccess": {
+              "type": "string"
+            },
+            "keyVaultResourceReference": {
+              "type": "object"
+            }
+          }
+        },
+        "defender": {
+          "type": "object",
+          "properties": {
+            "logAnalyticsWorkspaceResourceReference": {
+              "type": "object"
+            },
+            "securityMonitoring": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "imageCleaner": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "intervalHours": {
+              "type": "integer"
+            }
+          }
+        },
+        "workloadIdentity": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "serviceMeshProfile": {
+      "type": "object",
+      "properties": {
+        "istio": {
+          "type": "object",
+          "properties": {
+            "certificateAuthority": {
+              "type": "object",
+              "properties": {
+                "certChainObjectName": {
+                  "type": "string"
+                },
+                "certObjectName": {
+                  "type": "string"
+                },
+                "keyObjectName": {
+                  "type": "string"
+                },
+                "keyVaultReference": {
+                  "type": "object"
+                },
+                "rootCertObjectName": {
+                  "type": "string"
+                }
+              }
+            },
+            "components": {
+              "type": "object",
+              "properties": {
+                "egressGateways": {
+                  "type": "array"
+                },
+                "ingressGateways": {
+                  "type": "array"
+                }
+              }
+            },
+            "revisions": {
+              "type": "array"
+            }
+          }
+        },
+        "mode": {
+          "type": "string"
+        }
+      }
+    },
+    "sku": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tier": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
