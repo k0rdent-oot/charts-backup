@@ -7,4 +7,4 @@ appVersion: v25.7.0
 description: DPF Operator manages the lifecycle of a DOCA Platform Framework system.
 name: dpf-operator
 type: application
-version: "1764202765"
+version: v25.7.1

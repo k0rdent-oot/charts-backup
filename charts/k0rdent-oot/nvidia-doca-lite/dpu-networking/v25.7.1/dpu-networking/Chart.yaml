@@ -36,4 +36,4 @@ dependencies:
 description: A Helm chart for Kubernetes
 name: dpu-networking
 type: application
-version: "1764202765"
+version: v25.7.1
