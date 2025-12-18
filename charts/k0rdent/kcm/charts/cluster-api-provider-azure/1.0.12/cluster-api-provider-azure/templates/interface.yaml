@@ -1,0 +1,31 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ProviderInterface
+metadata:
+  name: cluster-api-provider-azure
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  clusterGVKs:
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta1
+      kind: AzureCluster
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1alpha1
+      kind: AzureASOManagedCluster
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta1
+      kind: AzureASOManagedCluster
+  clusterIdentities:
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta1
+      kind: AzureClusterIdentity
+      references:
+        - group: ""
+          version: v1
+          kind: Secret
+          nameFieldPath: spec.clientSecret.name
+          namespaceFieldPath: spec.clientSecret.namespace
+    - group: ""
+      version: v1
+      kind: Secret
+  description: "Azure infrastructure provider for Cluster API"
