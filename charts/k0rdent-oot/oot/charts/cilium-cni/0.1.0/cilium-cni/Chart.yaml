@@ -1,0 +1,12 @@
+annotations:
+  k0rdent.mirantis.com/type: service
+apiVersion: v2
+appVersion: 1.18.5
+dependencies:
+- name: cilium
+  repository: https://helm.cilium.io/
+  version: 1.18.5
+description: A KCM service chart for Cilium CNI deployment on workload clusters
+name: cilium-cni
+type: application
+version: 0.1.0

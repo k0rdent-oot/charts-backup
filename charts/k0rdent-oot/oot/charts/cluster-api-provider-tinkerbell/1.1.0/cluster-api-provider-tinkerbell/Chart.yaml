@@ -8,6 +8,10 @@ dependencies:
   name: tinkerbell
   repository: oci://ghcr.io/tinkerbell/charts
   version: v0.22.0
+- condition: kubeVipCloudProvider.enabled
+  name: kube-vip-cloud-provider
+  repository: https://kube-vip.github.io/helm-charts
+  version: 0.2.9
 description: A Helm chart for Cluster API Provider Tinkerbell
 name: cluster-api-provider-tinkerbell
 type: application

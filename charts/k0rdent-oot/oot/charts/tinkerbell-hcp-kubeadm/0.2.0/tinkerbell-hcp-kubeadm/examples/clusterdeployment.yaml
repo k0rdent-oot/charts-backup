@@ -1,0 +1,316 @@
+# Prerequisites:
+# 1. Tinkerbell infrastructure provider must be configured via cluster-api-provider-tinkerbell ProviderTemplate
+#    with kubeVipCloudProvider.enabled=true for automatic LoadBalancer IP assignment
+# 2. Hardware resources must be registered with appropriate labels and correct metadata.instance.id:
+#    The metadata.instance.id MUST be set to "namespace/hardwarename" format for CAPT provider-id matching.
+#    Example Hardware spec:
+#      metadata:
+#        instance:
+#          id: "kcm-system/vm2"  # Format: namespace/hardwarename
+#          hostname: "vm2"
+# 3. HelmRepository "oot-repo" must exist pointing to oci://ghcr.io/k0rdent-oot/oot/charts
+# 4. local-path-provisioner (or similar dynamic storage provisioner) must be installed
+#    on management cluster for HCP etcd persistent volumes:
+#    kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.31/deploy/local-path-storage.yaml
+#    kubectl patch sc local-path -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+#
+# IP Address Configuration:
+# This example uses the following IP addresses (adjust for your environment):
+# - 172.17.1.1: Tinkerbell publicIP and artifactsFileServer (configured in cluster-api-provider-tinkerbell)
+# - 172.17.1.200: Gateway LoadBalancer IP (Envoy proxy for HCP TLS passthrough)
+# - 172.17.1.201-172.17.1.250: IP pool for HCP services (assigned by kube-vip-cloud-provider)
+#
+# Note: Tinkerbell publicIP is configured in the cluster-api-provider-tinkerbell ProviderTemplate.
+# Use the same value in your templateOverride for the Hegel metadata URL:
+# - metadata_urls: http://<publicIP>:7172 (Hegel metadata service)
+#
+# The OS image is pulled directly from OCI registry using oci2disk action:
+# - IMG_URL: ghcr.io/s3rj1k/playground/ubuntu-2404:v1.34.2.gz (OCI image with kubeadm pre-installed)
+#
+# Automatic LoadBalancer IP Assignment:
+# - Gateway Envoy service: Configured via EnvoyProxy resource (gateway.envoyProxy.loadBalancerIP)
+# - HCP API server service: Assigned by kube-vip-cloud-provider from the IP pool (kubeVipIPPool.range)
+#
+# Post-Install Steps:
+# After worker node joins, remove the uninitialized taint to allow pods to be scheduled:
+#    kubectl --kubeconfig=<cluster-kubeconfig> taint nodes --all node.cluster.x-k8s.io/uninitialized:NoSchedule-
+
+---
+# ProviderTemplate for Kubeadm Bootstrap and Control Plane providers
+# This template references the cluster-api-provider-kubeadm chart from oot-repo
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ProviderTemplate
+metadata:
+  name: cluster-api-provider-kubeadm-0-1-0
+  labels:
+    k0rdent.mirantis.com/component: kcm
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: cluster-api-provider-kubeadm
+      version: 0.1.0
+      interval: 10m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo
+
+---
+# ProviderTemplate for Hosted Control Plane provider
+# This template references the cluster-api-provider-hosted-control-plane chart from oot-repo
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ProviderTemplate
+metadata:
+  name: cluster-api-provider-hosted-control-plane-0-1-0
+  labels:
+    k0rdent.mirantis.com/component: kcm
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: cluster-api-provider-hosted-control-plane
+      version: 0.1.0
+      interval: 10m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo
+
+---
+# ClusterTemplate for Tinkerbell HCP with Kubeadm bootstrap
+# This template references the tinkerbell-hcp-kubeadm chart from oot-repo
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterTemplate
+metadata:
+  name: tinkerbell-hcp-kubeadm-0-2-0
+  namespace: kcm-system
+  labels:
+    k0rdent.mirantis.com/component: kcm
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: tinkerbell-hcp-kubeadm
+      version: 0.2.0
+      interval: 10m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo
+
+---
+# ServiceTemplate for Cilium CNI
+# This template references the cilium-cni chart from oot-repo
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ServiceTemplate
+metadata:
+  name: cilium-cni-0-1-0
+  namespace: kcm-system
+  labels:
+    k0rdent.mirantis.com/component: kcm
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: cilium-cni
+      version: 0.1.0
+      interval: 10m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: oot-repo
+
+---
+# ClusterDeployment - the actual cluster deployment
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: tinkerbell-hcp-demo
+  namespace: kcm-system
+spec:
+  template: tinkerbell-hcp-kubeadm-0-2-0
+  credential: tinkerbell-cluster-identity-cred
+  config:
+    workersNumber: 1
+
+    kubernetes:
+      version: v1.34.2
+
+    clusterNetwork:
+      pods:
+        cidrBlocks:
+          - 192.168.0.0/18
+      services:
+        cidrBlocks:
+          - 10.96.0.0/12
+
+    gateway:
+      gatewayClass:
+        create: true
+        name: envoy
+        controllerName: gateway.envoyproxy.io/gatewayclass-controller
+      create: true
+      name: capi
+      hostname: "*.172.17.1.200.nip.io"
+      addresses:
+        - type: IPAddress
+          value: "172.17.1.200"
+      port: 443
+      protocol: TLS
+      tlsMode: Passthrough
+      envoyProxy:
+        create: true
+        loadBalancerIP: "172.17.1.200"
+
+    hostedControlPlane:
+      replicas: 1
+      deployment:
+        controllerManager:
+          args:
+            allocate-node-cidrs: "true"
+      konnectivityClient:
+        replicas: 1
+      kubeProxy:
+        enabled: true
+      coredns:
+        enabled: true
+
+    kubeVipIPPool:
+      enabled: true
+      range: "172.17.1.201-172.17.1.250"
+
+    tinkerbell:
+      imageLookup:
+        format: "{{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}:{{.KubernetesVersion}}.gz"
+        baseRegistry: ghcr.io/s3rj1k/playground
+        osDistro: ubuntu
+        osVersion: "2404"
+
+    worker:
+      bootMode: customboot
+      custombootConfig:
+        preparingActions:
+          - powerAction: "off"
+          - bootDevice:
+              device: "pxe"
+              efiBoot: true
+          - powerAction: "on"
+        postActions:
+          - powerAction: "off"
+          - bootDevice:
+              device: "disk"
+              persistent: true
+              efiBoot: true
+          - powerAction: "on"
+      hardwareAffinity:
+        matchLabels:
+          tinkerbell.org/role: worker
+      templateOverride: |
+        version: "0.1"
+        name: hcp-worker
+        global_timeout: 3600
+        tasks:
+          - name: "hcp-worker"
+            worker: "{{.device_1}}"
+            volumes:
+              - /dev:/dev
+              - /dev/console:/dev/console
+              - /lib/firmware:/lib/firmware:ro
+            actions:
+              - name: "Stream Ubuntu Image"
+                image: quay.io/tinkerbell/actions/oci2disk:latest
+                timeout: 600
+                environment:
+                  DEST_DISK: {{ index .Hardware.Disks 0 }}
+                  IMG_URL: ghcr.io/s3rj1k/playground/ubuntu-2404:v1.34.2.gz
+                  COMPRESSED: true
+
+              - name: "Sync and Grow Partition"
+                image: quay.io/tinkerbell/actions/cexec:latest
+                timeout: 90
+                environment:
+                  BLOCK_DEVICE: {{ index .Hardware.Disks 0 }}3
+                  FS_TYPE: ext4
+                  CHROOT: y
+                  DEFAULT_INTERPRETER: "/bin/sh -c"
+                  CMD_LINE: "sync && growpart {{ index .Hardware.Disks 0 }} 3 && resize2fs {{ index .Hardware.Disks 0 }}3 && sync"
+
+              - name: "Add Tink Cloud-Init Config"
+                image: quay.io/tinkerbell/actions/writefile:latest
+                timeout: 90
+                environment:
+                  DEST_DISK: {{ formatPartition ( index .Hardware.Disks 0 ) 3 }}
+                  FS_TYPE: ext4
+                  DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+                  UID: 0
+                  GID: 0
+                  MODE: 0600
+                  DIRMODE: 0700
+                  CONTENTS: |
+                    datasource:
+                      Ec2:
+                        metadata_urls: ["http://172.17.1.1:7172"]
+                        strict_id: false
+                    system_info:
+                      default_user:
+                        name: tink
+                        groups: [wheel, adm]
+                        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                        shell: /bin/bash
+                    manage_etc_hosts: localhost
+                    warnings:
+                      dsid_missing_source: off
+
+              - name: "Add Tink Cloud-Init DS-Identity"
+                image: quay.io/tinkerbell/actions/writefile:latest
+                timeout: 90
+                environment:
+                  DEST_DISK: {{ formatPartition ( index .Hardware.Disks 0 ) 3 }}
+                  FS_TYPE: ext4
+                  DEST_PATH: /etc/cloud/ds-identify.cfg
+                  UID: 0
+                  GID: 0
+                  MODE: 0600
+                  DIRMODE: 0700
+                  CONTENTS: |
+                    datasource: Ec2
+
+              - name: "Shutdown host"
+                image: ghcr.io/jacobweinstock/waitdaemon:latest
+                timeout: 90
+                pid: host
+                command: ["poweroff"]
+                environment:
+                  IMAGE: alpine
+                  WAIT_SECONDS: 10
+                volumes:
+                  - /var/run/docker.sock:/var/run/docker.sock
+
+    kubeadm:
+      users:
+        - name: tink
+          sudo: "ALL=(ALL) NOPASSWD:ALL"
+          sshAuthorizedKeys:
+            - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKLrIiGjB4nPsyKzgzY21asVi/HKlveRnNY77vOhRhOA"
+      preKubeadmCommands:
+        - systemctl enable --now containerd
+        - sleep 10
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: "tinkerbell://{{ ds.meta_data.instance_id }}"
+
+  serviceSpec:
+    services:
+      - template: cilium-cni-0-1-0
+        name: cilium
+        namespace: kube-system
+        values: |
+          cilium:
+            k8sServiceHost: tinkerbell-hcp-demo.kcm-system.172.17.1.200.nip.io
+            k8sServicePort: 443
