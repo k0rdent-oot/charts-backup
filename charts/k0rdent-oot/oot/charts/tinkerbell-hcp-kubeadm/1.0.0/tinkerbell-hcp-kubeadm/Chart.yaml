@@ -11,4 +11,4 @@ description: 'A KCM template to deploy a Kubernetes cluster on Tinkerbell bare-m
   with hosted control plane using cluster-api-provider-hosted-control-plane. '
 name: tinkerbell-hcp-kubeadm
 type: application
-version: 0.2.0
+version: 1.0.0

@@ -11,4 +11,4 @@ description: 'A KCM template to deploy a k0s cluster on Tinkerbell bare-metal wi
   bootstrapped control plane nodes. '
 name: tinkerbell-standalone-cp
 type: application
-version: 0.2.0
+version: 1.0.0

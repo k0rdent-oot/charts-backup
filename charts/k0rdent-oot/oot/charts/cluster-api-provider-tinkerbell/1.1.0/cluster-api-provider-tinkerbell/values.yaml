@@ -16,4 +16,4 @@ tinkerbell: # @schema description: Tinkerbell subchart configuration; type: obje
 # kube-vip-cloud-provider subchart configuration
 # Provides automatic LoadBalancer IP assignment for services
 kubeVipCloudProvider: # @schema description: kube-vip-cloud-provider subchart configuration; type: object
-  enabled: false # @schema description: Enable kube-vip-cloud-provider deployment; type: boolean
+  enabled: true # @schema description: Enable kube-vip-cloud-provider deployment; type: boolean

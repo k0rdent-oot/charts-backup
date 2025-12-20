@@ -9,4 +9,4 @@ dependencies:
 description: A KCM service chart for Cilium CNI deployment on workload clusters
 name: cilium-cni
 type: application
-version: 0.1.0
+version: 1.0.0
