@@ -1,0 +1,35 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ProviderInterface
+metadata:
+  name: cluster-api-provider-aws
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  clusterGVKs:
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta2
+      kind: AWSCluster
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta2
+      kind: AWSManagedCluster
+  clusterIdentities:
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta2
+      kind: AWSClusterStaticIdentity
+      references:
+        - group: ""
+          version: v1
+          kind: Secret
+          nameFieldPath: spec.secretRef
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta2
+      kind: AWSClusterRoleIdentity
+      references:
+        - group: infrastructure.cluster.x-k8s.io
+          version: v1beta2
+          kind: AWSClusterControllerIdentity
+          nameFieldPath: spec.sourceIdentityRef.name
+    - group: infrastructure.cluster.x-k8s.io
+      version: v1beta2
+      kind: AWSClusterControllerIdentity
+  description: "AWS infrastructure provider for Cluster API"
